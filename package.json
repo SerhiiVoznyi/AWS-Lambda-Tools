@@ -1,0 +1,52 @@
+{
+  "name": "aws-lambda-tools",
+  "version": "0.0.1",
+  "description": "Reusable utilities and helpers for AWS Lambda development",
+  "author": "Serhii Voznyi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SerhiiVoznyi/AWS-Lambda-Tools.git"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "aws-lambda",
+    "serverless",
+    "typescript",
+    "utilities"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.9",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.2.0",
+    "rimraf": "^6.1.2",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": "22"
+  }
+}
