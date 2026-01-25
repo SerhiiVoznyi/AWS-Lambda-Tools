@@ -1,3 +1,4 @@
+/*
 import { APIGatewayProxyEvent } from 'aws-lambda'
 import { v4 as uuidv4 } from 'uuid'
 import { LogLevel, LogRecord, LogTraceData } from '../'
@@ -219,3 +220,4 @@ export class LpLogger {
     }
   }
 }
+*/

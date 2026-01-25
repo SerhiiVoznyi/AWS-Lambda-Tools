@@ -1,4 +1,13 @@
 /**
+ * Trace Date type is describe the minimum params required for log record tracing
+ * - traceId - unique log session id. Helps distinguish log records between lambda executions.
+ */
+export type TraceData = {
+  [key: string]: string
+  traceId: string
+}
+
+/**
  * Log message Severity level
  * Source: https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel?view=dotnet-plat-ext-5.0
  * 0 -   Trace - Logs that contain the most detailed messages.These messages may contain sensitive application data.
@@ -19,4 +28,15 @@ export enum LogLevel {
   Critical = 5,
   Alert = 6,
   None = 100,
+}
+
+export type LogConfig = {
+    appName: string,
+    minLogLevel: LogLevel
+    traceData: TraceData
+    logAsSingleString?: boolean
+}
+
+export type LogRecord = {
+  
 }
