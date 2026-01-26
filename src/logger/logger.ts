@@ -57,4 +57,8 @@ export class LambdaLogger {
       })
     )
   }
+
+  private static checkSize (): number {
+
+  }
 }
