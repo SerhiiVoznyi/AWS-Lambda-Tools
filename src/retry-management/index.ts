@@ -56,14 +56,14 @@ export async function executeWithRetry<T> (
   let delay = 0
   do {
     try {
-      log(LogLevel.Information, `Try to execute ${operation}`)
+      log(LogLevel.Information, `Try to execute ${operation}.`)
       result = await fn()
       executionLog.push({ attempt, delayMs: delay, success: true })
       break
     } catch (ex) {
       const error = ex as Error
       const reason = error?.message ?? JSON.stringify(error, Object.getOwnPropertyNames(error))
-      const message: string = `Operation "${operation}" execution failed. Reason: ${reason}`
+      const message: string = `Operation "${operation}" execution failed. Reason: ${reason}.`
       executionLog.push({ attempt, delayMs: delay, success: false, error: message })
       log(LogLevel.Warning, message)
       if (attempt === attempts || ex instanceof NonRetryableException) {
@@ -77,7 +77,7 @@ export async function executeWithRetry<T> (
       delay = Math.min(delay, maxDelayMs)
     }
     if (attempt <= attempts) {
-      log(LogLevel.Information, `${operation} retry attempt ${attempt} after ${delay}ms`)
+      log(LogLevel.Information, `${operation} retry attempt ${attempt} after ${delay}ms.`)
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
     attempt++
