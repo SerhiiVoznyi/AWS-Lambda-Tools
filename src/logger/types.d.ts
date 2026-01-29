@@ -30,6 +30,9 @@ export enum LogLevel {
   None = 100,
 }
 
+/**
+ * 
+ */
 export type LogConfig = {
   appName: string,
   minLogLevel: LogLevel

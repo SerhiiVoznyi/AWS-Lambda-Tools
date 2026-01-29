@@ -3,7 +3,7 @@ import { LogConfig, LogLevel, LogRecord, TraceData } from './types'
 export const TRACE_HEADER_NAME = '_X_AMZN_TRACE_ID'
 export const CLOUD_WATCH_LOG_EVENT_LIMIT_BYTES = 256 * 1024
 
-export class LambdaLogger {
+export class SimpleLogger {
   private static _config: LogConfig
   private static _stack: Array<LogRecord> = []
 
