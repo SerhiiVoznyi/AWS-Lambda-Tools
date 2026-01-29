@@ -31,12 +31,16 @@ export enum LogLevel {
 }
 
 export type LogConfig = {
-    appName: string,
-    minLogLevel: LogLevel
-    traceData: TraceData
-    logAsSingleString?: boolean
+  appName: string,
+  minLogLevel: LogLevel
+  traceData: TraceData
+  logAsSingleString?: boolean
+  logOnDemand?: boolean
 }
 
 export type LogRecord = {
-  
+  severity: LogLevel, 
+  message: string,
+  trace?: TraceData
+  details?: Record<string, unknown>
 }
