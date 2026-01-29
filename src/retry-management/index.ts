@@ -1,4 +1,6 @@
-import { IRetryOptions, IRetryOptionsStrict, IExecutionWithRetryResult } from './types'
+import { SimpleLogger } from '../logger/logger'
+import { LogLevel } from '../logger/types'
+import { IRetryOptions, IRetryOptionsStrict, IExecutionWithRetryResult, NonRetryableException } from './types'
 
 /**
  * Default retry options used when no specific options are provided.
@@ -42,8 +44,8 @@ export async function executeWithRetry<T> (
   operation: string,
   fn: () => Promise<T>,
   options: IRetryOptions = {},
-  log: (logLevel: LogLevel, message: string) => void = (logLevel, message) => {
-    _log.writeLog(logLevel, message)
+  log: (severity: LogLevel, message: string, data?: Record<string, unknown>) => void = (severity, message, data) => {
+    SimpleLogger.addLogRecord(severity, message, data)
   }
 ): Promise<IExecutionWithRetryResult<T>> {
   const { attempts, minDelayMs, maxDelayMs, factor } = resolveOptionsWithDefaults(options)

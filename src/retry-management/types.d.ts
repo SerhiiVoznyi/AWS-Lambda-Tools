@@ -35,3 +35,15 @@ export interface IExecutionWithRetryResult<T> {
   error?: Error
   log: Array<{ attempt: number, delayMs: number, success: boolean, error?: string }>
 }
+
+/**
+ * Used to avoid retries when non-recoverable exception happens in `executeWithRetry` function.
+ */
+export class NonRetryableException extends Error {
+  type: 'NonRetryableException'
+  innerException: unknown
+  constructor (message: string, exception?: unknown) {
+    super(message)
+    this.innerException = exception
+  }
+}
