@@ -33,6 +33,13 @@ export default [
        * ========================= */
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        {
+          allowExpressions: false,
+          allowHigherOrderFunctions: false,
+        },
+      ],
 
       /* ===== Formatting (ESLint = formatter) ===== */
       semi: ['error', 'never'],

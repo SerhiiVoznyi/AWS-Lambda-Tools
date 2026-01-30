@@ -30,20 +30,18 @@ export enum LogLevel {
   None = 100,
 }
 
-/**
- * 
- */
 export type LogConfig = {
   appName: string,
-  minLogLevel: LogLevel
-  traceData: TraceData
+  minLogLevel: LogLevel  
   logAsSingleString?: boolean
   logOnDemand?: boolean
 }
 
 export type LogRecord = {
-  severity: LogLevel, 
-  message: string,
+  severity: string
+  message: string
+  timestamp: string
+  level: LogLevel
   trace?: TraceData
   details?: Record<string, unknown>
 }

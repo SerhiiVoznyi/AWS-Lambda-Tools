@@ -5,24 +5,29 @@ export const CLOUD_WATCH_LOG_EVENT_LIMIT_BYTES = 256 * 1024
 
 export class SimpleLogger {
   private static _config: LogConfig
+  private static _trace: TraceData
   private static _stack: Array<LogRecord> = []
 
-  public static setup (config?: LogConfig): void {
+  public static setup (config?: LogConfig, traceData?: TraceData): void {
     this._stack = []
 
-    this._config = config ?? ({} as unknown as LogConfig)
+    this._config = config ?? ({} as unknown as LogConfig) 
     this._config.appName ??= process.env.AWS_LAMBDA_FUNCTION_NAME ?? 'unknown'
-    this._config.minLogLevel ??=
-      LogLevel[process.env.LOG_MIN_LEVEL as keyof typeof LogLevel] ?? LogLevel.Information
-    this._config.traceData ??= {
+    this._config.minLogLevel ??= LogLevel[process.env.LOG_MIN_LEVEL as keyof typeof LogLevel] ?? LogLevel.Information
+    this._config.logAsSingleString ??= (process.env.LOG_AS_SINGLE_STRING ?? 'false').toLocaleLowerCase() === 'true'
+    this._config.logOnDemand ??= (process.env.LOG_ON_DEMAND ?? 'false').toLocaleLowerCase() === 'true'
+
+    this._trace ??= traceData ?? {
       traceId: process.env[TRACE_HEADER_NAME] ?? `${crypto.randomUUID()}`,
     }
-    this._config.logAsSingleString ??= process.env.LOG_AS_SINGLE_STRING === 'true'
-    this._config.logOnDemand ??= process.env.LOG_ON_DEMAND === 'true'
   }
 
   public static info (message: string, data?: Record<string, unknown>): void {
     this.addLogRecord(LogLevel.Information, message, data)
+  }
+
+  public static trace (message: string, data?: Record<string, unknown>): void {
+    this.addLogRecord(LogLevel.Trace, message, data)
   }
 
   public static warn (message: string, data?: Record<string, unknown>): void {
@@ -101,10 +106,10 @@ export class SimpleLogger {
     }
   }
 
-  private static write (level: LogLevel, record: { steps?: LogRecord[]; trace: TraceData }) {
+  private static write (level: LogLevel, record: { steps?: LogRecord[]; trace: TraceData }): void {
     const logMessage = this._config.logAsSingleString
       ? JSON.stringify(record).replaceAll(/(?:\r\n|\r|\n)/g, ' ')
-      : record
+      : JSON.stringify(record)
 
     switch (+level) {
     case LogLevel.Trace:
