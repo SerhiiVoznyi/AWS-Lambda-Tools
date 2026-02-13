@@ -15,28 +15,28 @@ export class RuleBuilder<
     private readonly rules: Rule<TModel>[]
   ) {}
 
-  string () {
+  string (): StringRuleBuilder<TModel, TPropertyName> {
     return new StringRuleBuilder<TModel, TPropertyName>(
       this.property,
       this.rules
     )
   }
 
-  number () {
+  number (): NumberRuleBuilder<TModel, TPropertyName> {
     return new NumberRuleBuilder<TModel, TPropertyName>(
       this.property,
       this.rules
     )
   }
 
-  boolean () {
+  boolean (): BooleanRuleBuilder<TModel, TPropertyName> {
     return new BooleanRuleBuilder<TModel, TPropertyName>(
       this.property,
       this.rules
     )
   }
 
-  array () {
+  array (): ArrayRuleBuilder<TModel, TPropertyName> {
     return new ArrayRuleBuilder<TModel, TPropertyName>(
       this.property,
       this.rules

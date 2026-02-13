@@ -2,12 +2,12 @@ import { RuleBuilder } from './rule-builders/rule-builder'
 import { Rule, ValidationResult } from './types'
 
 export abstract class AbstractValidator<TModel> {
-  private _rules = new Map<keyof TModel, Rule<TModel>[]>()
+  private rules = new Map<keyof TModel, Rule<TModel>[]>()
   
   public validate (model: TModel): ValidationResult {
     const errorMap = new Map<string, string[]>()
 
-    for (const [property, rules] of this._rules.entries()) {
+    for (const [property, rules] of this.rules.entries()) {
       const value = model[property]
 
       for (const rule of rules) {
@@ -29,9 +29,9 @@ export abstract class AbstractValidator<TModel> {
   }
   
   protected ruleFor<PropertyName extends keyof TModel> (property: PropertyName): RuleBuilder<TModel, PropertyName> {
-    if (!this._rules.has(property)) {
-      this._rules.set(property, [])
+    if (!this.rules.has(property)) {
+      this.rules.set(property, [])
     }
-    return new RuleBuilder(property, this._rules.get(property)!)
+    return new RuleBuilder(property, this.rules.get(property)!)
   }
 }

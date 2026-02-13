@@ -16,28 +16,28 @@ export class StringRuleBuilder<
     )
   }
 
-  required (message = `${String(this.property)} is required`) {
+  required (message = `${String(this.property)} is required`): this {
     return this.addRule(
       message,
       v => v != null && v !== ''
     )
   }
 
-  notEmpty (message?: string) {
+  notEmpty (message?: string): this {
     return this.addRule(
       message ?? `${String(this.property)} should not be empty`,
       v => v != null && v !== ''
     )
   }
 
-  maxLength (max: number, message?: string) {
+  maxLength (max: number, message?: string): this {
     return this.addRule(
       message ?? `${String(this.property)} must be at most ${max} characters long`,
       v => v != null && v.length <= max
     )
   }
 
-  minLength (min: number, message?: string) {
+  minLength (min: number, message?: string): this {
     return this.addRule(
       message ?? `${String(this.property)} must be at least ${min} characters long`,
       v => v != null && v.length >= min

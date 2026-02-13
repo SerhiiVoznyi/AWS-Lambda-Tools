@@ -1,14 +1,14 @@
-import type { Config } from "jest"
+import type { Config } from 'jest'
 
 const config: Config = {
-  preset: "ts-jest",
-  testEnvironment: "node",
+  preset: 'ts-jest',
+  testEnvironment: 'node',
 
-  testMatch: ["**/__tests__/**/*.test.ts", "**/?(*.)+(spec|test).ts"],
+  testMatch: ['**/__tests__/**/*.test.ts', 'src/**/*.test.{ts,tsx}', '**/?(*.)+(spec|test).ts'],
 
-  moduleFileExtensions: ["ts", "js"],
+  moduleFileExtensions: ['ts', 'js'],
   clearMocks: true,
-  collectCoverageFrom: ["src/**/*.ts"],
+  collectCoverageFrom: ['src/**/*.ts'],
 }
 
 export default config
