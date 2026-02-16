@@ -1,24 +1,15 @@
-import { LogConfig, LogLevel, LogRecord, TraceData } from './types'
-
-export const TRACE_HEADER_NAME = '_X_AMZN_TRACE_ID'
-export const CLOUD_WATCH_LOG_EVENT_LIMIT_BYTES = 256 * 1024
+import { LogConfig, LogConfigBuilder, LogLevel, LogRecord, TraceData } from './types'
 
 export class SimpleLogger {
-  private static _config: LogConfig
-  private static _trace: TraceData
-  private static _stack: Array<LogRecord> = []
+  private static config: LogConfig
+  private static traceData: TraceData
+  private static stack: Array<LogRecord> = []
 
-  public static setup (config?: LogConfig, traceData?: TraceData): void {
-    this._stack = []
-
-    this._config = config ?? ({} as unknown as LogConfig) 
-    this._config.appName ??= process.env.AWS_LAMBDA_FUNCTION_NAME ?? 'unknown'
-    this._config.minLogLevel ??= LogLevel[process.env.LOG_MIN_LEVEL as keyof typeof LogLevel] ?? LogLevel.Information
-    this._config.logAsSingleString ??= (process.env.LOG_AS_SINGLE_STRING ?? 'false').toLocaleLowerCase() === 'true'
-    this._config.logOnDemand ??= (process.env.LOG_ON_DEMAND ?? 'false').toLocaleLowerCase() === 'true'
-
-    this._trace ??= traceData ?? {
-      traceId: process.env[TRACE_HEADER_NAME] ?? `${crypto.randomUUID()}`,
+  public static setup (config?: Partial<LogConfig>, traceData?: TraceData): void {
+    this.stack = []
+    this.config = new LogConfigBuilder().fromDefaults(config).state()
+    this.traceData ??= traceData ?? {
+      traceId: process.env[DEFAULT_LOG_TRACE_ID_ENV_NAME] ?? `${crypto.randomUUID()}`,
     }
   }
 
@@ -46,21 +37,21 @@ export class SimpleLogger {
     message: string,
     details?: Record<string, unknown>
   ): void {
-    if (severity < this._config.minLogLevel) {
+    if (severity < this.config.minLogLevel) {
       return
     }
 
     const record: LogRecord = { severity, message, details }
 
-    this._stack.push(record)
+    this.stack.push(record)
 
-    if (!this._config.logOnDemand) {
+    if (!this.config.logOnDemand) {
       this.flash()
     }
   }
 
   public static flash (): void {
-    if (this._stack.length === 0) {
+    if (this.stack.length === 0) {
       return
     }
 
@@ -77,13 +68,13 @@ export class SimpleLogger {
       Buffer.byteLength(JSON.stringify(logMessage), 'utf8') < CLOUD_WATCH_LOG_EVENT_LIMIT_BYTES
 
     const logMessage: { steps?: LogRecord[]; trace: TraceData } = {
-      trace: this._config.traceData,
-      steps: this._config.logOnDemand ? [] : undefined,
+      trace: this.config.traceData,
+      steps: this.config.logOnDemand ? [] : undefined,
     }
 
-    for (const element of this._stack) {
-      if (!this._config.logOnDemand) {
-        this.write(level([element]), { trace: this._config.traceData, ...element })
+    for (const element of this.stack) {
+      if (!this.config.logOnDemand) {
+        this.write(level([element]), { trace: this.config.traceData, ...element })
         continue
       }
 
@@ -96,18 +87,18 @@ export class SimpleLogger {
     }
 
     this.write(level(logMessage.steps), logMessage)
-    this._stack = []
+    this.stack = []
   }
 
   public static state (): { config: LogConfig, stack:Array<LogRecord> } {
     return {
-      config: this._config,
-      stack: this._stack
+      config: this.config,
+      stack: this.stack
     }
   }
 
   private static write (level: LogLevel, record: { steps?: LogRecord[]; trace: TraceData }): void {
-    const logMessage = this._config.logAsSingleString
+    const logMessage = this.config.logAsSingleString
       ? JSON.stringify(record).replaceAll(/(?:\r\n|\r|\n)/g, ' ')
       : JSON.stringify(record)
 
