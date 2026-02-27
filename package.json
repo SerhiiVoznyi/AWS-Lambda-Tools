@@ -4,6 +4,7 @@
   "description": "Reusable utilities and helpers for AWS Lambda development",
   "author": "Serhii Voznyi",
   "license": "MIT",
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/SerhiiVoznyi/AWS-Lambda-Tools.git"

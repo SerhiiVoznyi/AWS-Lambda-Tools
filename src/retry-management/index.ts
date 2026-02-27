@@ -45,7 +45,7 @@ export async function executeWithRetry<T> (
   fn: () => Promise<T>,
   options: IRetryOptions = {},
   log: (severity: LogLevel, message: string, data?: Record<string, unknown>) => void = (severity, message, data) => {
-    SimpleLogger.addLogRecord(severity, message, data)
+    SimpleLogger.log(severity, message, data)
   }
 ): Promise<IExecutionWithRetryResult<T>> {
   const { attempts, minDelayMs, maxDelayMs, factor } = resolveOptionsWithDefaults(options)

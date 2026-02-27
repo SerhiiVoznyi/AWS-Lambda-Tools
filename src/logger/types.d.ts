@@ -1,21 +1,37 @@
-import { LogConfig, TraceData } from './types.d';
+import crypto from 'node:crypto'
+import { LogConfig, TraceData } from './types.d'
 
 export const DEFAULT_LOG_TRACE_ID_ENV_NAME = '_X_AMZN_TRACE_ID'
-export const DEFAULT_LOG_EVENT_LIMIT_BYTES = 256 * 1024
 
 /**
  * Trace Date type is describe the minimum params required for log record tracing
  * - traceId - unique log session id. Helps distinguish log records between lambda executions.
  */
-export interface TraceData{
+export interface TraceData {
   [key: string]: string
   traceId: string
 }
 
 export class TraceDataBuilder {
-  private traceData: TraceData
+  private traceData: TraceData = {
+    traceId: cripto.randomUUID(),
+  }
 
+  public fromDefaults(traceData?: Partial<TraceData>): this {
+    const input = traceData ?? {}
+    this.traceData = {
+      ...input,
+      traceId:
+        input.traceId ||
+        process.env[DEFAULT_LOG_TRACE_ID_ENV_NAME] ||
+        `session-${crypto.randomUUID()}`,
+    }
+    return this
+  }
 
+  public state(): TraceData {
+    return this.traceData
+  }
 }
 
 /**
@@ -42,54 +58,56 @@ export enum LogLevel {
 }
 
 export interface LogConfig {
-  displayName: string,
-  minLogLevel: LogLevel  
+  displayName: string
+  minLogLevel: LogLevel
   logAsSingleString?: boolean
-  logOnDemand?: boolean
   logEventLimitInBytes?: number
+  sensitiveDataKeys?: Array<string>
 }
 
-export class LogConfigBuilder {
-  private config: LogConfig = {
-    displayName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? 'unknown',
-    minLogLevel: LogLevel[process.env.LOG_MIN_LEVEL as keyof typeof LogLevel] ?? LogLevel.Information,
-    logAsSingleString: (process.env.LOG_AS_SINGLE_STRING ?? 'false').toLocaleLowerCase() === 'true',
-    logOnDemand: (process.env.LOG_ON_DEMAND ?? 'false').toLocaleLowerCase() === 'true',
-    logEventLimitInBytes: Number.parseInt(process.env.LOG_EVENT_LIMIT_IN_BYTES) ?? DEFAULT_LOG_EVENT_LIMIT_BYTES,
+export function initConfig(overrides?: Partial<LogConfig>): LogConfig {
+  const parseBool = (value?: string, defaultValue = false) =>
+    value?.toLowerCase() === 'true' ?? defaultValue
+
+  const parseNumber = (value?: string, defaultValue: number = 0) => {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : defaultValue
   }
 
-  public fromDefaults (config?: Partial<LogConfig>): LogConfigBuilder {
-    this.config.displayName = config?.displayName ?? this.config.displayName
-    this.config.minLogLevel = config?.minLogLevel ??  this.config.minLogLevel
-    this.config.logAsSingleString = config?.logAsSingleString ?? this.config.logAsSingleString
-    this.config.logOnDemand = config?.logOnDemand ?? this.config.logOnDemand
-    this.config.logEventLimitInBytes = config?.logEventLimitInBytes ?? this.config.logEventLimitInBytes
-    return this
+  const parseLogLevel = (value?: string, defaultLevel: LogLevel = LogLevel.Information) => {
+    if (!value) return defaultLevel
+    const key = value as keyof typeof LogLevel
+    if (key in LogLevel) return LogLevel[key]
+    return defaultLevel
   }
 
-  public withName (displayName: string): LogConfigBuilder {
-    this.config.displayName = displayName
-    return this
+  let sensitiveDataKeys: Array<string> = ['authorization', 'cookie', 'cookies']
+  if (process.env.LOG_SENSITIVE_DATA_KEYS) {
+    sensitiveDataKeys = process.env.LOG_SENSITIVE_DATA_KEYS.split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0)
+  }
+  if (Array.isArray(overrides?.sensitiveDataKeys)) {
+    sensitiveDataKeys = [...sensitiveDataKeys, ...overrides.sensitiveDataKeys]
   }
 
-  public withMinLogLevel (minLogLevel: LogLevel): LogConfigBuilder {
-    this.config.minLogLevel = minLogLevel
-    return this
+  const config: LogConfig = {
+    displayName:
+      overrides?.displayName ??
+      process.env.AWS_LAMBDA_FUNCTION_NAME ??
+      process.env.LOG_SERVICE_NAME ??
+      'unknown',
+    minLogLevel:
+      overrides?.minLogLevel ?? parseLogLevel(process.env.LOG_MIN_LEVEL, LogLevel.Information),
+    logAsSingleString:
+      overrides?.logAsSingleString ?? parseBool(process.env.LOG_AS_SINGLE_STRING, false),
+    logEventLimitInBytes:
+      overrides?.logEventLimitInBytes ??
+      parseNumber(process.env.LOG_EVENT_LIMIT_IN_BYTES, DEFAULT_LOG_EVENT_LIMIT_BYTES),
+    sensitiveDataKeys,
   }
 
-  public withLogAsSingleString (logAsSingleString: boolean = true): LogConfigBuilder {
-    this.config.logAsSingleString = logAsSingleString
-    return this
-  }
-
-  public withLogOnDemand (logOnDemand: boolean = true): LogConfigBuilder {
-    this.config.logOnDemand = logOnDemand
-    return this
-  }
-
-  public state (): LogConfig {
-    return this.config
-  }
+  return config
 }
 
 export interface LogRecord {
