@@ -1,19 +1,12 @@
-import {
-  LogConfig,
-  LogConfigBuilder,
-  LogLevel,
-  LogRecord,
-  TraceData,
-  TraceDataBuilder,
-} from './types'
+import { LogConfig, LogLevel, LogRecord, TraceData, initTraceData, initConfig } from './types'
 
 export class SimpleLogger {
   private static config: LogConfig
   private static traceData: TraceData
 
   public static setup(config?: Partial<LogConfig>, traceData?: TraceData): void {
-    this.config = new LogConfigBuilder().fromDefaults(config).state()
-    this.traceData = new TraceDataBuilder().fromDefaults(traceData).state()
+    this.config = initConfig(config)
+    this.traceData = initTraceData(traceData)
   }
 
   public static info(message: string, data?: Record<string, unknown>): void {
@@ -42,48 +35,44 @@ export class SimpleLogger {
     })
   }
 
-  public static log(severity: LogLevel, message: string, details?: Record<string, unknown>): void {
-    if(this.config == null) {
+  public static log(level: LogLevel, message: string, details?: Record<string, unknown>): void {
+    if (this.config == null) {
       throw new Error('SimpleLogger.setup() must be called before logging.')
     }
 
-    if (severity < this.config.minLogLevel) {
+    if (level < this.config.minLogLevel) {
       return
     }
 
     const record: LogRecord = {
-      severity: LogLevel[severity],
-      level: severity,
+      severity: LogLevel[level],
       timestamp: new Date().toISOString(),
       message,
-      details
+      details,
+      trace: this.traceData,
     }
 
     const logMessage: any = this.config.logAsSingleString
       ? JSON.stringify(record).replaceAll(/(?:\r\n|\r|\n)/g, ' ')
       : JSON.stringify(record)
 
-     switch (+severity) {
-      case LogLevel.Trace:
-        console.trace(logMessage)
-        break
-      case LogLevel.Warning:
-        console.warn(logMessage)
-        break
-      case LogLevel.Critical:
-      case LogLevel.Error:
-        console.error(logMessage)
-        break
-      default:
-        console.log(logMessage)
-        break;
-     }
+    const consoleMap: Record<LogLevel, (message?: any, ...optionalParams: any[]) => void> = {
+      [LogLevel.None]: () => {},
+      [LogLevel.Trace]: console.trace,
+      [LogLevel.Debug]: console.debug,
+      [LogLevel.Information]: console.info,
+      [LogLevel.Warning]: console.warn,
+      [LogLevel.Error]: console.error,
+      [LogLevel.Critical]: console.error,
+      [LogLevel.Alert]: console.error,
+    }
+    const logFn = consoleMap[level] ?? console.log
+    logFn(logMessage)
   }
 
-  public static state(): { config: LogConfig; stack: Array<LogRecord>, trace: TraceData } {
+  public static state(): { config: LogConfig; trace: TraceData } {
     return {
       config: this.config,
-      stack: this.stack,
       trace: this.traceData,
     }
   }
@@ -95,7 +84,9 @@ export class SimpleLogger {
     const seen = new WeakSet()
     return JSON.parse(
       JSON.stringify(data, (key, value) => {
-        if
+        if (typeof key === 'string' && this.config.sensitiveDataKeys?.has(key.toLowerCase())) {
+          return '[REDACTED]'
+        }
         if (typeof value === 'object' && value != null) {
           if (seen.has(value)) {
             return undefined

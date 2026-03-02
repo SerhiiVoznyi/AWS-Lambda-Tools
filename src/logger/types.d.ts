@@ -12,25 +12,25 @@ export interface TraceData {
   traceId: string
 }
 
-export class TraceDataBuilder {
-  private traceData: TraceData = {
-    traceId: cripto.randomUUID(),
-  }
+/**
+ * Initializes TraceData with defaults and overrides.
+ * Priority: overrides > environment variables > defaults
+ * Environment variables:
+ * - _X_AMZN_TRACE_ID for traceId
+ * Default values:
+ * - traceId: session-{randomUUID}
+ * @param overrides
+ * @returns TraceData
+ */
+export function initTraceData(overrides?: Partial<TraceData>): TraceData {
+  const traceId =
+    overrides?.traceId ||
+    process.env[DEFAULT_LOG_TRACE_ID_ENV_NAME] ||
+    `session-${crypto.randomUUID()}`
 
-  public fromDefaults(traceData?: Partial<TraceData>): this {
-    const input = traceData ?? {}
-    this.traceData = {
-      ...input,
-      traceId:
-        input.traceId ||
-        process.env[DEFAULT_LOG_TRACE_ID_ENV_NAME] ||
-        `session-${crypto.randomUUID()}`,
-    }
-    return this
-  }
-
-  public state(): TraceData {
-    return this.traceData
+  return {
+    ...overrides,
+    traceId,
   }
 }
 
@@ -57,14 +57,28 @@ export enum LogLevel {
   None = 100,
 }
 
+
 export interface LogConfig {
   displayName: string
   minLogLevel: LogLevel
   logAsSingleString?: boolean
-  logEventLimitInBytes?: number
-  sensitiveDataKeys?: Array<string>
+  sensitiveDataKeys?: Set<string>
 }
 
+/**
+ * Initializes LogConfig with defaults and overrides.
+ * Priority: overrides > environment variables > defaults
+ * Environment variables:
+ * - LOG_SERVICE_NAME or AWS_LAMBDA_FUNCTION_NAME for displayName
+ * - LOG_MIN_LEVEL for minLogLevel
+ * - LOG_AS_SINGLE_STRING for logAsSingleString
+ * Default values:
+ * - displayName: 'unknown'
+ * - minLogLevel: LogLevel.Information
+ * - logAsSingleString: false
+ * @param overrides 
+ * @returns LogConfig
+ */
 export function initConfig(overrides?: Partial<LogConfig>): LogConfig {
   const parseBool = (value?: string, defaultValue = false) =>
     value?.toLowerCase() === 'true' ?? defaultValue
@@ -101,10 +115,7 @@ export function initConfig(overrides?: Partial<LogConfig>): LogConfig {
       overrides?.minLogLevel ?? parseLogLevel(process.env.LOG_MIN_LEVEL, LogLevel.Information),
     logAsSingleString:
       overrides?.logAsSingleString ?? parseBool(process.env.LOG_AS_SINGLE_STRING, false),
-    logEventLimitInBytes:
-      overrides?.logEventLimitInBytes ??
-      parseNumber(process.env.LOG_EVENT_LIMIT_IN_BYTES, DEFAULT_LOG_EVENT_LIMIT_BYTES),
-    sensitiveDataKeys,
+    sensitiveDataKeys: new Set(sensitiveDataKeys.map(k => k.toLowerCase()))
   }
 
   return config
@@ -112,9 +123,8 @@ export function initConfig(overrides?: Partial<LogConfig>): LogConfig {
 
 export interface LogRecord {
   severity: string
-  message: string
   timestamp: string
-  level: LogLevel
+  message: string 
   trace?: TraceData
   details?: Record<string, unknown>
 }
